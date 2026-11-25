@@ -32,199 +32,435 @@ We use this categorical data encoding technique when the features are nominal(do
 
 # CODING AND OUTPUT:
 ```
+
 import pandas as pd
-df=pd.read_csv("/content/Encoding Data.csv")
-df
-```
-<img width="540" height="425" alt="image" src="https://github.com/user-attachments/assets/777c5323-bf74-4859-9eef-feefb02a88ad" />
+import numpy as np
+from sklearn.preprocessing import PowerTransformer
+encoding_data = pd.read_csv("Encoding Data (1).csv")
+data = pd.read_csv("data (1).csv")
+transform_data = pd.read_csv("Data_to_Transform (1).csv")
+print("ENCODING DATASET 1")
+print(encoding_data.head())
+print("\nENCODING DATASET 2")
+print(data.head())
+print("\nTRANSFORMATION DATASET")
+print(transform_data.head())
+def clean_data(df):
+
+    df = df.copy()
+
+    # Remove duplicate records
+    df = df.drop_duplicates()
+
+    # Remove extra spaces from categorical values
+    for col in df.select_dtypes(include="object").columns:
+        df[col] = df[col].str.strip()
+
+    # Handle missing values
+    for col in df.columns:
+
+        if df[col].isnull().sum() > 0:
+
+            if df[col].dtype == "object":
+                df[col] = df[col].fillna(
+                    df[col].mode()[0]
+                )
+
+            else:
+                df[col] = df[col].fillna(
+                    df[col].median()
+                )
+
+    return df
 
 
-```
-from sklearn.preprocessing import LabelEncoder, OrdinalEncoder
-pm=['Hot', 'Warm', 'Cold']
-e1=OrdinalEncoder(categories=[pm])
-e1.fit_transform(df[["ord_2"]])
-```
-<img width="507" height="197" alt="image" src="https://github.com/user-attachments/assets/6e9f97b3-1809-4ae2-a00f-b340405ead06" />
+encoding_data = clean_data(encoding_data)
+data = clean_data(data)
+transform_data = clean_data(transform_data)
+
+print("\nDATA CLEANING COMPLETED")
 
 
-~~~
-df['bo2']=e1.fit_transform(df[["ord_2"]])
-df
-~~~
-<img width="593" height="407" alt="image" src="https://github.com/user-attachments/assets/1c6b8f67-593f-4f41-919b-4d4fe121693b" />
+def label_encoding(df, columns):
+
+    df = df.copy()
+
+    for col in columns:
+
+        categories = sorted(df[col].dropna().unique())
+
+        mapping = {
+            value: index
+            for index, value in enumerate(categories)
+        }
+
+        df[col + "_Label"] = df[col].map(mapping)
+
+        print("\nLabel Encoding:", col)
+        print(mapping)
+
+    return df
 
 
-```
-LABEL ENCODER
-le=LabelEncoder()
-dfc=df.copy()
-dfc['ord_2']=le.fit_transform(dfc['ord_2'])
-dfc
-```
-<img width="636" height="412" alt="image" src="https://github.com/user-attachments/assets/035e16e5-db43-402a-bb0a-1eab058482a8" />
+def ordinal_encoding(df, ordinal_maps):
+
+    df = df.copy()
+
+    for col, order in ordinal_maps.items():
+
+        mapping = {
+            value: index
+            for index, value in enumerate(order)
+        }
+
+        unknown = set(df[col].dropna().unique()) - set(mapping)
+
+        if unknown:
+            raise ValueError(
+                f"Unknown categories in {col}: {unknown}"
+            )
+
+        df[col + "_Ordinal"] = df[col].map(mapping)
+
+        print("\nOrdinal Encoding:", col)
+        print(mapping)
+
+    return df
 
 
-```
-ONE HOT ENCODER
-from sklearn.preprocessing import OneHotEncoder
-ohe = OneHotEncoder(sparse_output=False)
-df2=df.copy()
-enc=pd.DataFrame(ohe.fit_transform(df2[['nom_0']]))
-df2=pd.concat([df2,enc], axis=1)
-df2
-```
-<img width="637" height="402" alt="image" src="https://github.com/user-attachments/assets/182e2803-9629-4594-ae5d-c22be8addc98" />
+def binary_encoding(series, prefix):
 
-```
-pd.get_dummies (df2,columns=["nom_0"])
-```
-<img width="921" height="367" alt="image" src="https://github.com/user-attachments/assets/f0355294-c3bb-481b-88e1-404bf4db9f3d" />
+    categories = sorted(
+        series.dropna().unique()
+    )
 
+    mapping = {
+        value: index
+        for index, value in enumerate(categories)
+    }
 
-```
-BINARY ENCODER
-df=pd.read_csv("/content/data.csv")
-df
-```
-<img width="1075" height="426" alt="image" src="https://github.com/user-attachments/assets/cfd288ec-1ff5-4e7b-9007-0672c3630bb2" />
+    codes = series.map(mapping).to_numpy(dtype=int)
 
-```
-pip install --upgrade category_encoders
-```
-<img width="1107" height="300" alt="image" src="https://github.com/user-attachments/assets/dbff5a30-d313-4726-b1c5-6c53ced4b646" />
+    width = max(
+        1,
+        int(np.ceil(np.log2(max(len(categories), 2))))
+    )
 
-```
-from category_encoders import BinaryEncoder
-df
-```
-<img width="612" height="373" alt="image" src="https://github.com/user-attachments/assets/9739bb29-a24b-49f0-9ca1-7df7aba58169" />
+    result = pd.DataFrame(index=series.index)
 
-```
-be=BinaryEncoder()
-nd=be.fit_transform(df ['Ord_2'])
-dfb=pd.concat([df,nd], axis=1)
-dfb1=df.copy()
-dfb
-```
-<img width="947" height="413" alt="image" src="https://github.com/user-attachments/assets/cb415019-c966-4773-8f37-b59c190d76d4" />
+    for bit in range(width):
 
-```
-TARGET ENCODER
-from category_encoders import TargetEncoder
-te=TargetEncoder()
-cc=df.copy()
-new=te.fit_transform(X=cc["City"], y=cc["Target"])
-cc=pd.concat([cc,new], axis=1)
-cc
-```
-<img width="748" height="406" alt="image" src="https://github.com/user-attachments/assets/ba3e5624-a027-40ca-bfa4-9c7e79a44cfb" />
+        result[prefix + "_Bit_" + str(bit + 1)] = (
+            (codes >> bit) & 1
+        )
+
+    print("\nBinary Encoding:", prefix)
+    print(mapping)
+
+    return result
 
 
-```
-FEAUTURE TRANSFORMATION
-import pandas as pd 
-from scipy import stats 
-import numpy as np 
-df=pd.read_csv("/content/Data_to_Transform.csv") 
-df
-```
-<img width="1025" height="487" alt="image" src="https://github.com/user-attachments/assets/6b7739d8-95f6-4519-9c6e-20b097f5e5c3" />
+def one_hot_encoding(df, columns):
 
-```
-df.skew()
-```
-<img width="437" height="213" alt="image" src="https://github.com/user-attachments/assets/6d19934d-ba7f-4755-85d4-216b8a167d8d" />
+    encoded = pd.get_dummies(
+        df[columns],
+        prefix=columns,
+        dtype=int
+    )
 
-```
-np.log(df["Highly Positive Skew"])
-```
-<img width="382" height="462" alt="image" src="https://github.com/user-attachments/assets/cd5379c6-b492-443b-bc95-f7394bc18d81" />
-
-```
-np.reciprocal(df["Moderate Positive Skew"])
-```
-<img width="410" height="466" alt="image" src="https://github.com/user-attachments/assets/ae63f608-f922-499a-9b03-59b75ed212d0" />
-
-```
-np.sqrt(df["Highly Positive Skew"])
-```
-<img width="392" height="462" alt="image" src="https://github.com/user-attachments/assets/db331f0d-0776-493a-9246-d344fa092a11" />
-
-```
-np.square(df["Highly Positive Skew"])
-```
-<img width="341" height="456" alt="image" src="https://github.com/user-attachments/assets/a9b1bb2d-fbda-48e2-b594-c6f7b5ec2c21" />
-
-```
-df["Highly Positive Skew_boxcox"], parameters=stats.boxcox(df["Highly Positive Skew"]) 
-df
-```
-<img width="1087" height="492" alt="image" src="https://github.com/user-attachments/assets/da79d4eb-bd90-4a5b-b59d-5dddd99fef04" />
-
-```
-df["Moderate Negative Skew_yeojohnson"],parameters=stats.yeojohnson(df["Moderate Negative Skew"]) 
-df.skew()
-```
-<img width="611" height="272" alt="image" src="https://github.com/user-attachments/assets/848940ae-9e76-4699-b120-ecbe9f0079f6" />
-
-```
-df["Highly Negative Skew_yeojohnson"],parameters=stats.yeojohnson(df["Highly Negative Skew"]) 
-df.skew()
-```
-<img width="522" height="297" alt="image" src="https://github.com/user-attachments/assets/fb41ffc7-0961-4cc0-9bb5-5a946c2362eb" />
-
-```
-QUANTILE TRANSFORMATION
-from sklearn.preprocessing import QuantileTransformer 
-qt=QuantileTransformer(output_distribution='normal') 
-df["Moderate Negative Skew_1"]=qt.fit_transform(df[["Moderate Negative Skew"]]) 
-df
-```
-<img width="1086" height="517" alt="image" src="https://github.com/user-attachments/assets/daeb19c2-df50-4e79-90a4-5b0e2a2ca68b" />
-
-```
-import seaborn as sns 
-import statsmodels.api as sm 
-import matplotlib.pyplot as plt 
-sm.qqplot(df["Moderate Negative Skew"],line='45') 
-plt.show()
-```
-<img width="763" height="457" alt="image" src="https://github.com/user-attachments/assets/a3ede6c2-e82f-4aca-a80d-5a3bf3cf6d0d" />
-
-```
-sm.qqplot(np.reciprocal(df["Moderate Negative Skew"]),line='45') 
-plt.show()
-```
-<img width="798" height="457" alt="image" src="https://github.com/user-attachments/assets/ee9e774c-c48c-40d7-a302-ef0e597d92c0" />
-
-```
-from sklearn.preprocessing import QuantileTransformer
-df["Moderate Negative Skew"]=qt.fit_transform(df[["Moderate Negative Skew"]])
-sm.qqplot(df["Moderate Negative Skew"],line='45') 
-plt.show()
-```
-<img width="835" height="455" alt="image" src="https://github.com/user-attachments/assets/d5184693-e7a4-4825-8bc2-32a6fa4f3e0b" />
-
-```
-df["Highly Negative Skew_1"]=qt.fit_transform(df[["Highly Negative Skew"]])
-sm.qqplot(df['Highly Negative Skew'], line='45')
-plt.show()
-```
-<img width="826" height="455" alt="image" src="https://github.com/user-attachments/assets/a3106919-b8e2-4d5d-b8f0-02d41cb70d3b" />
-
-
-```
-sm.qqplot(df['Highly Negative Skew_1'], line='45')
-plt.show()
-```
-<img width="780" height="453" alt="image" src="https://github.com/user-attachments/assets/58d03781-2020-4c9b-a8e8-827dbc4c8d8c" />
+    return encoded
 
 
 
+print("\n========== DATASET 1 ENCODING ==========")
+
+encoded_data1 = label_encoding(
+    encoding_data,
+    ["bin_1", "bin_2"]
+)
+
+encoded_data1 = ordinal_encoding(
+    encoded_data1,
+    {
+        "ord_2": ["Cold", "Warm", "Hot"]
+    }
+)
+
+binary1 = binary_encoding(
+    encoding_data["nom_0"],
+    "nom_0"
+)
+
+encoded_data1 = pd.concat(
+    [encoded_data1, binary1],
+    axis=1
+)
+
+onehot1 = one_hot_encoding(
+    encoding_data,
+    ["nom_0"]
+)
+
+encoded_data1 = pd.concat(
+    [encoded_data1, onehot1],
+    axis=1
+)
+
+encoded_data1.to_csv(
+    "Encoding_Data1_Output.csv",
+    index=False
+)
+
+print("\nDATASET 1 FINAL ENCODED OUTPUT")
+print(encoded_data1.head())
+
+
+print("\n========== DATASET 2 ENCODING ==========")
+
+encoded_data2 = label_encoding(
+    data,
+    ["bin_1", "bin_2"]
+)
+
+encoded_data2 = ordinal_encoding(
+    encoded_data2,
+    {
+        "Ord_1": [
+            "Cold",
+            "Warm",
+            "Hot",
+            "Very Hot"
+        ],
+
+        "Ord_2": [
+            "High School",
+            "Diploma",
+            "Bachelors",
+            "Masters",
+            "PhD"
+        ]
+    }
+)
+
+binary2 = binary_encoding(
+    data["City"],
+    "City"
+)
+
+encoded_data2 = pd.concat(
+    [encoded_data2, binary2],
+    axis=1
+)
+
+onehot2 = one_hot_encoding(
+    data,
+    ["City"]
+)
+
+encoded_data2 = pd.concat(
+    [encoded_data2, onehot2],
+    axis=1
+)
+
+encoded_data2.to_csv(
+    "Encoding_Data2_Output.csv",
+    index=False
+)
+
+print("\nDATASET 2 FINAL ENCODED OUTPUT")
+print(encoded_data2.head())
+
+
+print("\n========== FEATURE TRANSFORMATION ==========")
+
+# Work with numerical columns
+result = transform_data.copy()
+
+numeric_columns = transform_data.select_dtypes(
+    include=np.number
+).columns
 
 
 
+for col in numeric_columns:
+
+    x = transform_data[col].astype(float)
+
+    shift = max(0, 0.000001 - x.min())
+
+    xp = x + shift
+
+    # 1. LOG TRANSFORMATION
+
+    result[col + "_Log"] = np.log(xp)
+
+    # 2. RECIPROCAL TRANSFORMATION
+
+    result[col + "_Reciprocal"] = 1 / xp
+
+    # 3. SQUARE ROOT TRANSFORMATION
+
+    result[col + "_SquareRoot"] = np.sqrt(xp)
+
+    # 4. SQUARE TRANSFORMATION
+
+    result[col + "_Square"] = x ** 2
+
+
+# Display all four function transformation outputs
+
+print("\n========== FUNCTION TRANSFORMATION OUTPUT ==========")
+
+for col in numeric_columns:
+
+    print("\nOriginal Feature:", col)
+
+    print("\n1. Log Transformation")
+    print(result[col + "_Log"].head())
+
+    print("\n2. Reciprocal Transformation")
+    print(result[col + "_Reciprocal"].head())
+
+    print("\n3. Square Root Transformation")
+    print(result[col + "_SquareRoot"].head())
+
+    print("\n4. Square Transformation")
+    print(result[col + "_Square"].head())
+
+
+# Save function transformation output
+
+function_columns = [
+    col + suffix
+    for col in numeric_columns
+    for suffix in [
+        "_Log",
+        "_Reciprocal",
+        "_SquareRoot",
+        "_Square"
+    ]
+]
+
+function_output = result[
+    list(transform_data.columns) + function_columns
+]
+
+function_output.to_csv(
+    "Function_Transformation_Output.csv",
+    index=False
+)
+
+
+# ---------- POWER TRANSFORMATIONS ----------
+
+print("\n========== POWER TRANSFORMATION OUTPUT ==========")
+
+power_result = transform_data.copy()
+
+for col in numeric_columns:
+
+    x = transform_data[col].astype(float)
+
+    # Box-Cox requires strictly positive values
+    shift = max(0, 0.000001 - x.min())
+    xp = x + shift
+
+    # 5. BOX-COX TRANSFORMATION
+
+    boxcox = PowerTransformer(
+        method="box-cox",
+        standardize=False
+    )
+
+    power_result[col + "_BoxCox"] = (
+        boxcox.fit_transform(
+            xp.to_numpy().reshape(-1, 1)
+        ).ravel()
+    )
+
+    # 6. YEO-JOHNSON TRANSFORMATION
+
+    yeojohnson = PowerTransformer(
+        method="yeo-johnson",
+        standardize=False
+    )
+
+    power_result[col + "_YeoJohnson"] = (
+        yeojohnson.fit_transform(
+            x.to_numpy().reshape(-1, 1)
+        ).ravel()
+    )
+
+    print("\nFeature:", col)
+
+    print("\n5. Box-Cox Transformation")
+    print(power_result[col + "_BoxCox"].head())
+
+    print("\n6. Yeo-Johnson Transformation")
+    print(power_result[col + "_YeoJohnson"].head())
+
+
+# Save power transformation output
+
+power_columns = [
+    col + suffix
+    for col in numeric_columns
+    for suffix in [
+        "_BoxCox",
+        "_YeoJohnson"
+    ]
+]
+
+power_output = power_result[
+    list(transform_data.columns) + power_columns
+]
+
+power_output.to_csv(
+    "Power_Transformation_Output.csv",
+    index=False
+)
+
+
+# ---------- SAVE ALL TRANSFORMATIONS TO ONE FILE ----------
+
+result.to_csv(
+    "All_Transformation_Output.csv",
+    index=False
+)
+
+
+# =====================================================
+# STEP 5: FINAL OUTPUT
+# =====================================================
+
+print("\n========== FINAL RESULTS ==========")
+
+print("\nEncoded Dataset 1 Shape:")
+print(encoded_data1.shape)
+
+print("\nEncoded Dataset 2 Shape:")
+print(encoded_data2.shape)
+
+print("\nFunction Transformation Shape:")
+print(function_output.shape)
+
+print("\nPower Transformation Shape:")
+print(power_output.shape)
+
+print("\nAll Transformation Shape:")
+print(result.shape)
+```
+
+# Output:
+<img width="822" height="703" alt="Screenshot 2026-11-25 154554" src="https://github.com/user-attachments/assets/b5146e56-9210-4d7f-9c0d-c1c97f33f506" />
+<img width="815" height="635" alt="Screenshot 2026-11-25 154615" src="https://github.com/user-attachments/assets/d0940e21-b801-4a40-9b5a-a598e46f478d" />
+<img width="893" height="881" alt="Screenshot 2026-11-25 154744" src="https://github.com/user-attachments/assets/cf4af61a-c15c-4225-ac06-444d668f08a4" />
+<img width="898" height="896" alt="Screenshot 2026-11-25 154839" src="https://github.com/user-attachments/assets/c658aa24-3733-43d9-bccd-b405fe841338" />
+<img width="823" height="807" alt="Screenshot 2026-11-25 154911" src="https://github.com/user-attachments/assets/929f8eaf-e759-4d8d-b58b-a0dde551d4e6" />
+<img width="821" height="663" alt="Screenshot 2026-11-25 154944" src="https://github.com/user-attachments/assets/960a3a53-6e3a-4111-aecf-1b78a1d7bff2" />
+<img width="777" height="681" alt="Screenshot 2026-11-25 155001" src="https://github.com/user-attachments/assets/4a144d97-71c1-427f-9543-c6b0acdb70c7" />
+<img width="822" height="727" alt="Screenshot 2026-11-25 155035" src="https://github.com/user-attachments/assets/2580841a-1acb-4124-a82a-8fd387d5e6ff" />
+<img width="827" height="727" alt="Screenshot 2026-11-25 155104" src="https://github.com/user-attachments/assets/1f3342a6-b38c-46b2-8ebb-69e9621c3e73" />
 
 
 

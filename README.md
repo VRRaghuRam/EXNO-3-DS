@@ -462,22 +462,47 @@ print(result.shape)
 <img width="822" height="727" alt="Screenshot 2026-11-25 155035" src="https://github.com/user-attachments/assets/2580841a-1acb-4124-a82a-8fd387d5e6ff" />
 <img width="827" height="727" alt="Screenshot 2026-11-25 155104" src="https://github.com/user-attachments/assets/1f3342a6-b38c-46b2-8ebb-69e9621c3e73" />
 
+# Summary
 
+1.The main aim of this experiment is to perform Feature Encoding and Feature Transformation on the given datasets and save the processed data into CSV files.
 
+2.First, three datasets are loaded using the Pandas read_csv() function.
 
+3.Data cleaning is performed by removing duplicate records, handling missing values, and removing unnecessary spaces from categorical values.
 
+4.Ordinal Encoding converts ordered categorical values into numbers while preserving their meaningful order.
 
+5.It is useful for features such as temperature levels and educational qualifications.
 
+6.Label Encoding converts categorical labels into numerical values, making categorical data suitable for machine learning algorithms.
 
+7.Binary Encoding converts categories into binary digits, reducing the number of additional columns compared with One Hot Encoding when there are many categories.
 
+8.One Hot Encoding creates separate binary columns for each category and avoids assigning an artificial numerical order to nominal features.
 
+9.These encoding techniques help machine learning algorithms process categorical data efficiently.
 
+10.Feature Transformation is applied to numerical columns to change their distribution and improve data representation.
 
+11.Log Transformation reduces positive skewness and compresses large numerical values.
 
+12.Reciprocal Transformation uses the inverse of values and can reduce the effect of extremely large observations.
 
+13.Square Root Transformation reduces moderate positive skewness and makes numerical distributions more balanced.
 
- 
-       
+14.Square Transformation increases the influence of larger values and emphasizes differences between observations.
+
+15.Box-Cox Transformation uses a power-based mathematical technique to reduce skewness and requires strictly positive values.
+
+16.Yeo-Johnson Transformation is similar to Box-Cox but can also handle zero and negative values.
+
+17.These transformation methods help improve the distribution of numerical features and can make patterns easier for machine learning models to learn.
+
+18.The transformed and encoded datasets are saved using Pandas to_csv() so they can be reused for further analysis.
+
+19.The program uses Pandas, NumPy, and Scikit-learn to perform data cleaning, encoding, and transformation operations.
+
+20.Thus, the experiment demonstrates how categorical and numerical data can be prepared for effective machine learning analysis.
 # RESULT:
    successfully performed Feature Encoding and Transformation process
        
